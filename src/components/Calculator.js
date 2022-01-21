@@ -7,83 +7,59 @@ import AppFooter from './AppFooter';
 const Calculator = () => {
     const [inputVal, setInputVal] = useState('');
     const [err, setErr] = useState('');
-    let arithmeticOps = ['+', '-', '*', '/'];
 
     const handleChange = (e) => {
         setInputVal(e.target.value);
         setErr('');
     }
-
-    const isArithmeticOp = (str, ops) => {
-        for (let x = 0; x < ops.length; x++) {
-            let op = ops[x];
-            if (str.indexOf(op) > -1) return true;
-        }
-
-        return false;
-    }
-
-    const compute = () => {
-        let nums = [];
-        let ops = [];
-        let stack = [];
-        let inputStr = inputVal.split(',');
-
-        for (let x = 0; x < inputStr.length; x++) {
-            if (!isArithmeticOp(inputStr[x], ['+', '-', '*', '/'])) {
-                nums.push(parseFloat(inputStr[x].toString()));
-            } else {
-                ops.push(inputStr[x]);
-            }
-        }
-
-        if (ops.length + 1 === nums.length) {
-            for (let y = 0; y < inputStr.length; y++) {
-                if (!isNaN(inputStr[y])) {
-                    stack.push(inputStr[y]);
-                } else if (arithmeticOps) {
-                    let i = stack.pop();
-                    let j = stack.pop();
-
-                    switch (inputStr[y]) {
-                        case '+': 
-                            stack.push(parseFloat(i) + parseFloat(j));
-                            break;
-                        case '-': 
-                            stack.push(parseFloat(i) - parseFloat(j));
-                            break;
-                        case '*': 
-                            stack.push(parseFloat(i) * parseFloat(j));
-                            break;
-                        case '/': 
-                            stack.push(parseFloat(i) / parseFloat(j));
-                            break;
-                        default: 
-                            break;
-                    }
-                }
-            }
-
-            let result = stack.pop();
-            setInputVal(`${inputVal} = ${result}`);
-
-            if (inputVal === '') {
-                setErr('You did not enter anything!');
-                setInputVal(inputVal);
-            } else if (inputVal.match(/[a-z =()]/)) {
-                setErr('Only numbers and arithmetic operators are valid!');
-                setInputVal(inputVal);
-            }
-        } else if (ops.length >= nums.length) {
-            return setErr('Something went wrong! Check number of OPERATORS!');
-        } else {
-            setErr('Something went wrong! Check the number of OPERANDS!');
-        }
-    }
-     
+    
     const handleClear = () => {
         setInputVal('');
         setErr('');
+    }
+    
+    const rpnCalc = (newExpression) => {
+        let expression = newExpression.split(',');
+        let stack = [];
+        let numCount = 0;
+        let opsCount = 0;
+        for (let i = 0; i < expression.length; i++) {
+            if (!isNaN(expression[i]) && isFinite(expression[i])) {
+                stack.push(expression[i]);
+                numCount++;
+            } else {
+                opsCount++;
+                let a = stack.pop();
+                let b = stack.pop();
+                if (expression[i] === '+') {
+                    stack.push((parseFloat(a) + parseFloat(b)).toFixed(2));
+                } else if (expression[i] === '-') {
+                    stack.push((parseFloat(a) - parseFloat(b)).toFixed(2));
+                } else if (expression[i] === '*') {
+                    stack.push((parseFloat(a) * parseFloat(b)).toFixed(2));
+                } else if (expression[i] === '/') {
+                    stack.push((parseFloat(a) / parseFloat(b)).toFixed(2));
+                }
+            }
+        }
+
+        if (inputVal === '') {
+            return setErr('You did not enter anything!');
+        }
+
+        if (numCount === opsCount + 1 
+            && newExpression !== '' 
+            && stack[0] !== undefined) {
+            setErr('')
+            setInputVal(inputVal + ' = ' + stack[0]);
+        }else if (inputVal.match(/[a-z=()]/)) {
+            setErr('Only numbers and arithmetic operators are valid!');
+            setInputVal('');
+        } else if (numCount <= opsCount) {
+            setErr('Something went wrong! Check the number of OPERATORS!');
+        } else if (numCount >= opsCount - 2) {
+            setErr('Something went wrong! Check the number of OPERANDS!');
+        }
     }
 
     return (
@@ -91,7 +67,7 @@ const Calculator = () => {
             <AppHeader />
             <div className="input-buttons">
                 <Input inputVal={inputVal} handleChange={handleChange} />
-                <Button compute={compute} handleClear={handleClear} />
+                <Button inputVal={inputVal} rpnCalc={rpnCalc} handleClear={handleClear} />
             </div>
             <div className="errors">
                 <p>{err}</p>
